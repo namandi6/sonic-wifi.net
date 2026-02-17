@@ -111,7 +111,7 @@ const CaptivePortal = () => {
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-electric/10 border-2 border-electric/40 mb-4 wifi-pulse mx-auto">
             <Wifi className="w-10 h-10 text-electric" />
           </div>
-          <h1 className="font-display text-6xl gradient-text-electric mb-1">KABEJJA NET</h1>
+          <h1 className="font-display text-6xl gradient-text-electric mb-1">SONIC NET</h1>
           <p className="text-muted-foreground font-heading text-base tracking-wide">Ultra-Fast Wi-Fi · Pay & Connect Instantly</p>
           <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
             <span className="bg-secondary/20 border border-secondary/30 text-secondary px-3 py-1 rounded-full text-xs font-bold">MTN MOMO</span>
@@ -282,7 +282,7 @@ const CaptivePortal = () => {
 
       {/* Footer */}
       <div className="relative z-10 border-t border-border py-4 text-center text-xs text-muted-foreground">
-        Kabejja Net Wi-Fi · Powered by <span className="text-electric">Pesapal</span>
+        Sonic Net Wi-Fi · Powered by <span className="text-electric">Pesapal</span>
         {" · "}
         <a href="/admin" className="hover:text-electric transition-colors">Admin</a>
       </div>

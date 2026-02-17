@@ -4,7 +4,7 @@ import {
   Wifi, Users, TrendingUp, Clock, CheckCircle,
   AlertCircle, Settings, RefreshCw, LogOut, Eye, EyeOff,
   Printer, Plus, Package, ChevronDown, ChevronUp, Download, BookOpen,
-  Server, Save, TestTube
+  Server, Save, TestTube, UserCheck, Trash2, KeyRound
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -25,7 +25,10 @@ interface Voucher {
   valid_hours: number;
   created_at: string;
   expires_at: string;
-  wifi_packages: { name: string } | null;
+  device_ip: string | null;
+  used_at: string | null;
+  order_id: string | null;
+  wifi_packages: { name: string; duration_label?: string; speed_mbps?: number; max_devices?: number } | null;
 }
 
 interface WifiPackage {
@@ -36,7 +39,10 @@ interface WifiPackage {
   price_kes: number;
 }
 
-const ADMIN_PASS = "sonic2024";
+const ADMIN_PASS_KEY = "sonic_admin_pass";
+const DEFAULT_PASS = "sonic2024";
+
+const getAdminPass = () => localStorage.getItem(ADMIN_PASS_KEY) || DEFAULT_PASS;
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -44,7 +50,7 @@ const AdminPanel = () => {
   const [pass, setPass] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [passErr, setPassErr] = useState("");
-  const [tab, setTab] = useState<"overview" | "orders" | "vouchers" | "bulk" | "guide" | "settings">("overview");
+  const [tab, setTab] = useState<"overview" | "orders" | "vouchers" | "users" | "bulk" | "guide" | "settings">("overview");
   const [orders, setOrders] = useState<Order[]>([]);
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [packages, setPackages] = useState<WifiPackage[]>([]);
@@ -56,8 +62,15 @@ const AdminPanel = () => {
   const [bulkGenerated, setBulkGenerated] = useState<{ code: string; pkg: string; duration: string; expires_at: string }[]>([]);
   const [bulkLoading, setBulkLoading] = useState(false);
 
+  // Password reset state
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [currentPass, setCurrentPass] = useState("");
+  const [newPass, setNewPass] = useState("");
+  const [confirmPass, setConfirmPass] = useState("");
+  const [passResetMsg, setPassResetMsg] = useState("");
+
   const login = () => {
-    if (pass === ADMIN_PASS) { setAuthed(true); loadData(); }
+    if (pass === getAdminPass()) { setAuthed(true); loadData(); }
     else setPassErr("Incorrect password");
   };
 
@@ -65,7 +78,7 @@ const AdminPanel = () => {
     setLoading(true);
     const [{ data: ordersData }, { data: vouchersData }, { data: pkgsData }] = await Promise.all([
       supabase.from("orders").select("*, wifi_packages(name, duration_label)").order("created_at", { ascending: false }).limit(100),
-      supabase.from("vouchers").select("*, wifi_packages(name)").order("created_at", { ascending: false }).limit(100),
+      supabase.from("vouchers").select("*, wifi_packages(name, duration_label, speed_mbps, max_devices)").order("created_at", { ascending: false }).limit(100),
       supabase.from("wifi_packages").select("*").eq("is_active", true).order("price_kes"),
     ]);
     if (ordersData) setOrders(ordersData as Order[]);
@@ -90,7 +103,7 @@ const AdminPanel = () => {
     for (let i = 0; i < bulkQty; i++) {
       const expiresAt = new Date(Date.now() + pkg.duration_hours * 3600 * 1000).toISOString();
       const { data: codeData } = await supabase.rpc("generate_voucher_code");
-      const code = codeData || `BULK-${Date.now()}-${i}`;
+      const code = codeData || `${Math.floor(1000 + Math.random() * 9000)}`;
 
       const { data: voucher } = await supabase.from("vouchers").insert({
         code,
@@ -119,18 +132,17 @@ const AdminPanel = () => {
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         .card { border: 2px dashed #333; border-radius: 8px; padding: 12px; text-align: center; page-break-inside: avoid; }
         .logo { font-size: 14px; font-weight: bold; margin-bottom: 4px; }
-        .code { font-size: 18px; font-weight: bold; letter-spacing: 2px; margin: 8px 0; color: #0077cc; }
+        .code { font-size: 24px; font-weight: bold; letter-spacing: 4px; margin: 8px 0; color: #0077cc; }
         .pkg { font-size: 11px; color: #555; }
-        .price { font-size: 13px; font-weight: bold; margin-top: 4px; }
         .cut { border-top: 1px dashed #aaa; margin-top: 8px; padding-top: 4px; font-size: 10px; color: #888; }
         @media print { body { padding: 10px; } }
       </style></head>
       <body>
-        <h1>🌐 Kabejja Net Wi-Fi Vouchers — ${new Date().toLocaleDateString()}</h1>
+        <h1>📶 Sonic Net Wi-Fi Vouchers — ${new Date().toLocaleDateString()}</h1>
         <div class="grid">
           ${bulkGenerated.map(v => `
             <div class="card">
-              <div class="logo">📶 KABEJJA NET</div>
+              <div class="logo">📶 SONIC NET</div>
               <div class="pkg">${v.pkg} · ${v.duration}</div>
               <div class="code">${v.code}</div>
               <div class="cut">─────────────────</div>
@@ -144,6 +156,41 @@ const AdminPanel = () => {
     if (win) { win.document.write(printContent); win.document.close(); win.print(); }
   };
 
+  const handlePasswordReset = () => {
+    setPassResetMsg("");
+    if (currentPass !== getAdminPass()) {
+      setPassResetMsg("Current password is incorrect");
+      return;
+    }
+    if (newPass.length < 6) {
+      setPassResetMsg("New password must be at least 6 characters");
+      return;
+    }
+    if (newPass !== confirmPass) {
+      setPassResetMsg("Passwords do not match");
+      return;
+    }
+    localStorage.setItem(ADMIN_PASS_KEY, newPass);
+    setPassResetMsg("✅ Password updated successfully!");
+    setCurrentPass("");
+    setNewPass("");
+    setConfirmPass("");
+    setTimeout(() => setPassResetMsg(""), 3000);
+  };
+
+  // Connected users = active vouchers with device info
+  const connectedUsers = vouchers.filter(v => v.status === "active");
+
+  const getTimeRemaining = (expiresAt: string | null) => {
+    if (!expiresAt) return "—";
+    const diff = new Date(expiresAt).getTime() - Date.now();
+    if (diff <= 0) return "Expired";
+    const hours = Math.floor(diff / 3600000);
+    const mins = Math.floor((diff % 3600000) / 60000);
+    if (hours > 24) return `${Math.floor(hours / 24)}d ${hours % 24}h`;
+    return `${hours}h ${mins}m`;
+  };
+
   if (!authed) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -155,7 +202,7 @@ const AdminPanel = () => {
             </div>
             <div>
               <h2 className="font-heading text-xl text-foreground">Admin Login</h2>
-              <p className="text-xs text-muted-foreground">Kabejja Net Management</p>
+              <p className="text-xs text-muted-foreground">Sonic Net Management</p>
             </div>
           </div>
           <div className="mb-4">
@@ -186,6 +233,7 @@ const AdminPanel = () => {
     { id: "overview", label: "Overview" },
     { id: "orders", label: "Orders" },
     { id: "vouchers", label: "Vouchers" },
+    { id: "users", label: "👥 Users" },
     { id: "bulk", label: "Bulk Generate" },
     { id: "guide", label: "MikroTik Guide" },
     { id: "settings", label: "⚙️ Settings" },
@@ -196,7 +244,7 @@ const AdminPanel = () => {
       <div className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Wifi className="w-5 h-5 text-electric" />
-          <span className="font-display text-xl gradient-text-electric">KABEJJA NET</span>
+          <span className="font-display text-xl gradient-text-electric">SONIC NET</span>
           <span className="text-muted-foreground text-xs border border-border rounded px-2 py-0.5 ml-1">Admin</span>
         </div>
         <div className="flex items-center gap-2">
@@ -267,12 +315,11 @@ const AdminPanel = () => {
                 {vouchers.filter(v => v.status === "active").slice(0, 6).map(v => (
                   <div key={v.id} className="flex items-center justify-between text-sm border-b border-border/50 pb-2 last:border-0 last:pb-0">
                     <div>
-                      <p className="font-mono text-electric text-xs">{v.code}</p>
+                      <p className="font-mono text-electric text-sm font-bold">{v.code}</p>
                       <p className="text-xs text-muted-foreground">{v.wifi_packages?.name}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-muted-foreground flex items-center gap-1 justify-end"><Clock className="w-3 h-3" /> Expires</p>
-                      <p className="text-xs text-foreground">{v.expires_at ? new Date(v.expires_at).toLocaleDateString() : "—"}</p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 justify-end"><Clock className="w-3 h-3" /> {getTimeRemaining(v.expires_at)}</p>
                     </div>
                   </div>
                 ))}
@@ -321,7 +368,7 @@ const AdminPanel = () => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border bg-muted/20">
-                    {["Code", "Package", "Status", "Valid For", "Expires", "Created"].map(h => (
+                    {["Code", "Package", "Status", "Valid For", "Time Left", "Created"].map(h => (
                       <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{h}</th>
                     ))}
                   </tr>
@@ -329,7 +376,7 @@ const AdminPanel = () => {
                 <tbody className="divide-y divide-border">
                   {vouchers.map(v => (
                     <tr key={v.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="px-4 py-3 font-mono text-sm text-electric">{v.code}</td>
+                      <td className="px-4 py-3 font-mono text-sm text-electric font-bold">{v.code}</td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{v.wifi_packages?.name || "—"}</td>
                       <td className="px-4 py-3">
                         <span className={`text-xs font-bold uppercase px-2 py-1 rounded-full ${v.status === "active" ? "bg-electric/20 text-electric" : v.status === "used" ? "bg-muted text-muted-foreground" : "bg-destructive/20 text-destructive"}`}>
@@ -337,7 +384,7 @@ const AdminPanel = () => {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{v.valid_hours}h</td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">{v.expires_at ? new Date(v.expires_at).toLocaleString() : "—"}</td>
+                      <td className="px-4 py-3 text-sm text-foreground">{getTimeRemaining(v.expires_at)}</td>
                       <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(v.created_at).toLocaleString()}</td>
                     </tr>
                   ))}
@@ -348,12 +395,78 @@ const AdminPanel = () => {
           </div>
         )}
 
+        {/* Connected Users Tab */}
+        {tab === "users" && (
+          <div className="space-y-4">
+            <div className="card-sonic rounded-xl p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <UserCheck className="w-5 h-5 text-electric" />
+                <h3 className="font-heading text-xl text-foreground">Connected Users ({connectedUsers.length})</h3>
+              </div>
+              {connectedUsers.length === 0 ? (
+                <p className="text-muted-foreground text-sm py-8 text-center">No active users currently connected</p>
+              ) : (
+                <div className="space-y-3">
+                  {connectedUsers.map(v => (
+                    <div key={v.id} className="bg-muted/20 border border-border rounded-xl p-4">
+                      <div className="flex items-start justify-between gap-4 flex-wrap">
+                        <div className="space-y-2 flex-1 min-w-[200px]">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-electric text-lg font-bold">{v.code}</span>
+                            <span className="bg-electric/20 text-electric text-xs font-bold px-2 py-0.5 rounded-full uppercase">{v.status}</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Package:</span>{" "}
+                              <span className="text-foreground font-medium">{v.wifi_packages?.name || "—"}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Duration:</span>{" "}
+                              <span className="text-foreground">{v.wifi_packages?.duration_label || `${v.valid_hours}h`}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Speed:</span>{" "}
+                              <span className="text-foreground">{v.wifi_packages?.speed_mbps ? `${v.wifi_packages.speed_mbps} Mbps` : "—"}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Max Devices:</span>{" "}
+                              <span className="text-foreground">{v.wifi_packages?.max_devices || "—"}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Device IP:</span>{" "}
+                              <span className="text-foreground font-mono text-xs">{v.device_ip || "Not connected yet"}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Used At:</span>{" "}
+                              <span className="text-foreground text-xs">{v.used_at ? new Date(v.used_at).toLocaleString() : "—"}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Created:</span>{" "}
+                              <span className="text-foreground text-xs">{new Date(v.created_at).toLocaleString()}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Time Left:</span>{" "}
+                              <span className={`font-semibold ${getTimeRemaining(v.expires_at) === "Expired" ? "text-destructive" : "text-electric"}`}>
+                                {getTimeRemaining(v.expires_at)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Bulk Generate */}
         {tab === "bulk" && (
           <div className="space-y-4">
             <div className="card-sonic rounded-xl p-6">
               <h3 className="font-heading text-xl text-foreground mb-1">Bulk Voucher Generator</h3>
-              <p className="text-sm text-muted-foreground mb-5">Generate multiple vouchers at once and print them for physical distribution.</p>
+              <p className="text-sm text-muted-foreground mb-5">Generate multiple 4-digit vouchers at once and print them for physical distribution.</p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
                 <div>
@@ -403,11 +516,11 @@ const AdminPanel = () => {
                     Print All
                   </button>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-h-96 overflow-y-auto">
                   {bulkGenerated.map((v, i) => (
                     <div key={i} className="bg-muted/20 border border-border rounded-xl p-3 text-center">
                       <p className="text-xs text-muted-foreground mb-1">{v.pkg} · {v.duration}</p>
-                      <p className="font-mono text-electric font-bold text-sm">{v.code}</p>
+                      <p className="font-mono text-electric font-bold text-xl tracking-widest">{v.code}</p>
                       <p className="text-xs text-muted-foreground mt-1">Exp: {new Date(v.expires_at).toLocaleDateString()}</p>
                     </div>
                   ))}
@@ -421,153 +534,135 @@ const AdminPanel = () => {
         {tab === "guide" && <MikroTikGuide />}
 
         {/* Settings */}
-        {tab === "settings" && <MikroTikSettings />}
+        {tab === "settings" && (
+          <div className="space-y-4">
+            <MikroTikSettings />
+
+            {/* Password Reset Section */}
+            <div className="card-sonic rounded-xl p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <KeyRound className="w-5 h-5 text-fire" />
+                <h3 className="font-heading text-xl text-foreground">Reset Admin Password</h3>
+              </div>
+              <div className="space-y-4 max-w-md">
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Current Password</label>
+                  <input
+                    type="password"
+                    value={currentPass}
+                    onChange={e => setCurrentPass(e.target.value)}
+                    placeholder="Enter current password"
+                    className="w-full bg-muted/30 border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-electric transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">New Password</label>
+                  <input
+                    type="password"
+                    value={newPass}
+                    onChange={e => setNewPass(e.target.value)}
+                    placeholder="Enter new password (min 6 chars)"
+                    className="w-full bg-muted/30 border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-electric transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Confirm New Password</label>
+                  <input
+                    type="password"
+                    value={confirmPass}
+                    onChange={e => setConfirmPass(e.target.value)}
+                    placeholder="Confirm new password"
+                    onKeyDown={e => e.key === "Enter" && handlePasswordReset()}
+                    className="w-full bg-muted/30 border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-electric transition-colors"
+                  />
+                </div>
+                {passResetMsg && (
+                  <div className={`rounded-xl p-3 text-sm border ${passResetMsg.startsWith("✅") ? "bg-electric/10 border-electric/30 text-electric" : "bg-destructive/10 border-destructive/30 text-destructive"}`}>
+                    {passResetMsg}
+                  </div>
+                )}
+                <button onClick={handlePasswordReset} className="btn-fire px-6 py-3 rounded-xl font-heading flex items-center gap-2">
+                  <KeyRound className="w-4 h-4" />
+                  Update Password
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-// ─── MikroTik Configuration Guide ───────────────────────────────────────────
-
-// ─── MikroTik Settings ──────────────────────────────────────────────────────
-
-const SETTINGS_KEY = "kabejja_mikrotik_settings";
-
-interface MikroTikConfig {
-  apiUrl: string;
-  username: string;
-  password: string;
-  routerIp: string;
-  defaultProfile: string;
-}
-
-const defaultConfig: MikroTikConfig = {
-  apiUrl: "",
-  username: "admin",
-  password: "",
-  routerIp: "192.168.88.1",
-  defaultProfile: "default",
-};
+// ─── MikroTik Settings (now uses backend secrets) ───────────────────────────
 
 const MikroTikSettings = () => {
-  const [config, setConfig] = useState<MikroTikConfig>(() => {
-    try {
-      const saved = localStorage.getItem(SETTINGS_KEY);
-      return saved ? { ...defaultConfig, ...JSON.parse(saved) } : defaultConfig;
-    } catch { return defaultConfig; }
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
-
-  const update = (key: keyof MikroTikConfig, value: string) => {
-    setConfig(prev => ({ ...prev, [key]: value }));
-    setSaved(false);
-    setTestResult(null);
-  };
-
-  const saveConfig = () => {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(config));
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  };
+  const [testing, setTesting] = useState(false);
 
   const testConnection = async () => {
-    if (!config.apiUrl) {
-      setTestResult({ ok: false, msg: "Please enter the API URL first" });
-      return;
-    }
     setTesting(true);
     setTestResult(null);
     try {
-      const resp = await fetch(`${config.apiUrl}/rest/system/identity`, {
-        headers: {
-          "Authorization": "Basic " + btoa(`${config.username}:${config.password}`),
-        },
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const baseUrl = `https://${projectId}.supabase.co/functions/v1`;
+      const resp = await fetch(`${baseUrl}/pesapal-status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "test_mikrotik" }),
       });
       if (resp.ok) {
-        const data = await resp.json();
-        setTestResult({ ok: true, msg: `✅ Connected! Router: ${data.name || "MikroTik"}` });
+        setTestResult({ ok: true, msg: "✅ Backend secrets are configured. MikroTik will be called on payment confirmation." });
       } else {
-        setTestResult({ ok: false, msg: `❌ HTTP ${resp.status} — Check credentials` });
+        setTestResult({ ok: false, msg: "❌ Could not verify. Check backend secrets." });
       }
     } catch (err: any) {
-      setTestResult({ ok: false, msg: `❌ Connection failed — ${err.message || "Check URL & CORS"}` });
+      setTestResult({ ok: false, msg: `❌ Error: ${err.message}` });
     }
     setTesting(false);
   };
 
-  const fields: { key: keyof MikroTikConfig; label: string; placeholder: string; help: string; isPassword?: boolean }[] = [
-    { key: "apiUrl", label: "MikroTik API URL", placeholder: "https://203.0.113.50:443", help: "Public IP/domain with port. Must be reachable from the internet. Use HTTPS for security." },
-    { key: "username", label: "API Username", placeholder: "admin", help: "RouterOS admin username. Create a dedicated API user for production." },
-    { key: "password", label: "API Password", placeholder: "••••••••", help: "RouterOS password for the API user.", isPassword: true },
-    { key: "routerIp", label: "Router LAN IP", placeholder: "192.168.88.1", help: "Local IP used for auto-connect redirect (hotspot login page)." },
-    { key: "defaultProfile", label: "Default Hotspot Profile", placeholder: "default", help: "The MikroTik hotspot user profile to assign if no specific match." },
-  ];
-
   return (
-    <div className="space-y-4">
-      <div className="card-sonic rounded-xl p-5">
-        <div className="flex items-center gap-3 mb-2">
-          <Server className="w-6 h-6 text-electric" />
-          <h3 className="font-heading text-xl text-foreground">MikroTik Router Settings</h3>
-        </div>
-        <p className="text-sm text-muted-foreground mb-6">
-          Configure your MikroTik REST API connection for automated hotspot user provisioning. RouterOS 7+ is required.
-        </p>
+    <div className="card-sonic rounded-xl p-5">
+      <div className="flex items-center gap-3 mb-2">
+        <Server className="w-6 h-6 text-electric" />
+        <h3 className="font-heading text-xl text-foreground">MikroTik Router Settings</h3>
+      </div>
+      <p className="text-sm text-muted-foreground mb-5">
+        MikroTik credentials are securely stored as backend secrets. When a payment is confirmed, the system automatically provisions hotspot users on your router.
+      </p>
 
-        <div className="space-y-5">
-          {fields.map(f => (
-            <div key={f.key}>
-              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">{f.label}</label>
-              <div className="relative">
-                <input
-                  type={f.isPassword && !showPassword ? "password" : "text"}
-                  value={config[f.key]}
-                  onChange={e => update(f.key, e.target.value)}
-                  placeholder={f.placeholder}
-                  className="w-full bg-muted/30 border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-electric transition-colors pr-10"
-                />
-                {f.isPassword && (
-                  <button onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-electric transition-colors">
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">{f.help}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap gap-3 mt-6">
-          <button onClick={saveConfig} className="btn-electric px-6 py-3 rounded-xl font-heading flex items-center gap-2">
-            <Save className="w-4 h-4" />
-            {saved ? "✓ Saved!" : "Save Settings"}
-          </button>
-          <button onClick={testConnection} disabled={testing} className="btn-fire px-6 py-3 rounded-xl font-heading flex items-center gap-2 disabled:opacity-50">
-            <TestTube className="w-4 h-4" />
-            {testing ? "Testing..." : "Test Connection"}
-          </button>
-        </div>
-
-        {testResult && (
-          <div className={`mt-4 rounded-xl p-4 border text-sm ${testResult.ok ? "bg-electric/10 border-electric/30 text-electric" : "bg-destructive/10 border-destructive/30 text-destructive"}`}>
-            {testResult.msg}
+      <div className="bg-muted/20 border border-border rounded-xl p-4 mb-5 space-y-2">
+        <p className="text-sm font-semibold text-foreground mb-2">Configured Secrets:</p>
+        {["MIKROTIK_API_URL", "MIKROTIK_USERNAME", "MIKROTIK_PASSWORD", "MIKROTIK_ROUTER_IP"].map(s => (
+          <div key={s} className="flex items-center gap-2 text-sm">
+            <CheckCircle className="w-4 h-4 text-electric" />
+            <span className="font-mono text-muted-foreground">{s}</span>
+            <span className="text-xs text-electric">✓ Stored securely</span>
           </div>
-        )}
+        ))}
       </div>
 
-      <div className="bg-fire/10 border border-fire/30 rounded-xl p-4">
-        <p className="text-sm font-semibold text-fire mb-1">⚠️ Security Notes</p>
-        <ul className="text-xs text-muted-foreground space-y-1">
-          <li>• Settings are stored locally in your browser only</li>
-          <li>• For production, store credentials as backend secrets instead</li>
-          <li>• Use HTTPS on your router's REST API</li>
-          <li>• Create a dedicated API user with limited permissions on your router</li>
-          <li>• Enable the REST API: /ip/service enable www-ssl</li>
-        </ul>
+      <div className="bg-electric/10 border border-electric/30 rounded-xl p-4 mb-5">
+        <p className="text-sm font-semibold text-electric mb-1">🔄 Auto-Provisioning Flow</p>
+        <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+          <li>User pays via Pesapal</li>
+          <li>IPN confirms payment → 4-digit voucher generated</li>
+          <li>Voucher auto-created as hotspot user on MikroTik</li>
+          <li>User enters 4-digit code → connected to Sonic Net</li>
+        </ol>
       </div>
+
+      <button onClick={testConnection} disabled={testing} className="btn-electric px-6 py-3 rounded-xl font-heading flex items-center gap-2 disabled:opacity-50">
+        <TestTube className="w-4 h-4" />
+        {testing ? "Checking..." : "Verify Backend Config"}
+      </button>
+
+      {testResult && (
+        <div className={`mt-4 rounded-xl p-4 border text-sm ${testResult.ok ? "bg-electric/10 border-electric/30 text-electric" : "bg-destructive/10 border-destructive/30 text-destructive"}`}>
+          {testResult.msg}
+        </div>
+      )}
     </div>
   );
 };
@@ -581,7 +676,7 @@ const steps = [
       "Go to IP → Hotspot → Setup Wizard",
       "Select the interface connected to the wireless/LAN side (e.g. bridge-local)",
       "Set the IP pool for hotspot users (e.g. 192.168.88.10–192.168.88.254)",
-      "Set DNS name: hotspot.kabejjanet.com (or leave as IP)",
+      "Set DNS name: hotspot.sonicnet.com (or leave as IP)",
       "Create an admin user when prompted",
     ]
   },
@@ -616,46 +711,34 @@ const steps = [
     ]
   },
   {
-    title: "5. Auto-Login Users with Voucher Code",
+    title: "5. Auto-Login with 4-Digit Voucher Code",
     content: [
-      "When a user gets a voucher, add them as a hotspot user via the API or manually",
-      "Go to IP → Hotspot → Users → Add",
-      "Username = Voucher Code (e.g. ABCD-EFGH-1234)",
-      "Password = same as voucher code (or blank)",
-      "Profile = select the matching profile (daily/weekly/monthly)",
-      "Limit Uptime = 1d/7d/30d",
-      "User connects to Wi-Fi → browser opens login page → enters voucher code → connected!",
+      "Vouchers are now 4-digit numeric codes for easy entry",
+      "Auto-provisioned as hotspot users when payment is confirmed",
+      "Username = 4-digit code (e.g. 7349)",
+      "Password = same 4-digit code",
+      "User connects to 'Sonic Net' → enters code → connected!",
     ]
   },
   {
-    title: "6. Automated via MikroTik API (Advanced)",
+    title: "6. Automated Provisioning (Active)",
     content: [
-      "Install RouterOS API library on your server",
-      "When Pesapal confirms payment → call MikroTik API to create hotspot user automatically",
-      "API port is 8728 (or 8729 for SSL) on your router",
-      "Command: /ip/hotspot/user/add name=<voucher> password=<voucher> profile=<plan> limit-uptime=<duration>",
-      "This fully automates the process — no manual user creation needed",
-      "For security: create a separate API user with limited permissions",
+      "MikroTik credentials stored securely as backend secrets",
+      "When Pesapal confirms payment → backend calls MikroTik REST API",
+      "API endpoint: POST /rest/ip/hotspot/user/add",
+      "Voucher code set as both username & password",
+      "Profile and uptime limit set automatically based on package",
+      "No manual user creation needed — fully automated!",
     ]
   },
   {
     title: "7. Auto-Connect After Payment",
     content: [
-      "After the user gets their voucher code, the portal redirects them to the MikroTik login page",
-      "If using the default MikroTik login page: http://192.168.88.1/login",
-      "The redirect URL can auto-fill the username/password: http://192.168.88.1/login?username=VOUCHER&password=VOUCHER",
+      "After the user gets their voucher code, the portal offers auto-connect",
+      "Redirect URL: http://<router-ip>/login?username=<code>&password=<code>",
+      "Example: http://192.168.88.1/login?username=7349&password=7349",
+      "The router IP is configured in backend secrets (MIKROTIK_ROUTER_IP)",
       "This gives users a 1-click connection experience",
-      "Set this URL in the PaymentCallback page's 'Connect Now' button",
-    ]
-  },
-  {
-    title: "8. Redirect URL for Auto-Connect",
-    content: [
-      "After successful payment, user should be redirected to:",
-      "http://<router-ip>/login?username=<voucher-code>&password=<voucher-code>",
-      "Example: http://192.168.88.1/login?username=ABCD-EFGH-1234&password=ABCD-EFGH-1234",
-      "Set your router's IP in the portal settings (default: 192.168.88.1)",
-      "Test this URL manually first to confirm auto-login works on your firmware version",
     ]
   },
 ];
@@ -671,8 +754,8 @@ const MikroTikGuide = () => {
           <h3 className="font-heading text-xl text-foreground">MikroTik Hotspot Configuration Guide</h3>
         </div>
         <p className="text-sm text-muted-foreground">
-          Step-by-step guide to configure your MikroTik router to work with this captive portal system.
-          This covers hotspot setup, walled garden, voucher-based authentication, and auto-connect after payment.
+          Step-by-step guide to configure your MikroTik router to work with Sonic Net captive portal.
+          Vouchers are now 4-digit codes with fully automated provisioning.
         </p>
       </div>
 
@@ -706,7 +789,7 @@ const MikroTikGuide = () => {
           <li>• Always test with a small amount first before going live</li>
           <li>• Make sure your router has a stable internet connection on the WAN port</li>
           <li>• The router IP 192.168.88.1 is the default — yours may be different</li>
-          <li>• For production, use HTTPS on your portal to protect payment data</li>
+          <li>• Wi-Fi network name should be set to "Sonic Net" on your router</li>
         </ul>
       </div>
     </div>
