@@ -87,6 +87,22 @@ const AdminPanel = () => {
     setLoading(false);
   };
 
+  const runCleanup = async () => {
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    try {
+      await fetch(`https://${projectId}.supabase.co/functions/v1/cleanup-expired`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+    } catch (e) { console.error('Cleanup error:', e); }
+    loadData();
+  };
+
+  // Auto-cleanup every 5 minutes
+  useEffect(() => {
+    if (!authed) return;
+    const interval = setInterval(runCleanup, 5 * 60 * 1000);
+    runCleanup(); // run once on load
+    return () => clearInterval(interval);
+  }, [authed]);
+
   const completedOrders = orders.filter(o => o.status === "completed");
   const totalRevenue = completedOrders.reduce((s, o) => s + o.amount_kes, 0);
   const activeVouchers = vouchers.filter(v => v.status === "active").length;
