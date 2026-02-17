@@ -21,7 +21,6 @@ const VoucherDisplay = ({ voucher, expiresAt, pkg, onClose }: VoucherDisplayProp
   const [copied, setCopied] = useState(false);
 
   const durationLabel = pkg.duration_label || pkg.duration || "";
-  const speedLabel = pkg.speed_mbps ? `${pkg.speed_mbps} Mbps` : (pkg.speed || "");
 
   const copyVoucher = () => {
     navigator.clipboard.writeText(voucher);
@@ -43,7 +42,7 @@ const VoucherDisplay = ({ voucher, expiresAt, pkg, onClose }: VoucherDisplayProp
 
           <h2 className="font-display text-4xl gradient-text-electric mb-2">YOUR VOUCHER</h2>
           <p className="text-muted-foreground text-sm mb-6">
-            {pkg.name}{durationLabel ? ` · ${durationLabel}` : ""}{speedLabel ? ` · ${speedLabel}` : ""}
+            {pkg.name}{durationLabel ? ` · ${durationLabel}` : ""}
           </p>
 
           <div className="bg-muted/30 border border-electric/30 rounded-2xl p-6 mb-6 relative overflow-hidden">

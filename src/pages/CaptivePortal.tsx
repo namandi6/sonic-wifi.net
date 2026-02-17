@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Wifi, Zap, Clock, Users, ChevronRight, Phone, Mail, Shield } from "lucide-react";
+import { Wifi, Clock, Users, ChevronRight, Phone, Mail, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import VoucherDisplay from "@/components/VoucherDisplay";
 import sonicBg from "@/assets/sonic-bg.jpeg";
@@ -148,11 +148,10 @@ const CaptivePortal = () => {
                       <span className="bg-fire text-white text-xs font-bold px-2 py-0.5 rounded-full">BEST VALUE</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{pkg.duration_label}</span>
-                    <span className="flex items-center gap-1"><Zap className="w-3 h-3" />{pkg.speed_mbps} Mbps</span>
-                    <span className="flex items-center gap-1"><Users className="w-3 h-3" />{pkg.max_devices} device{pkg.max_devices > 1 ? "s" : ""}</span>
-                  </div>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{pkg.duration_label}</span>
+                      <span className="flex items-center gap-1"><Users className="w-3 h-3" />{pkg.max_devices} device{pkg.max_devices > 1 ? "s" : ""}</span>
+                    </div>
                 </div>
                 <div className="text-right flex-shrink-0">
                   <div className={`font-display text-3xl ${pkg.is_popular ? "gradient-text-fire" : "gradient-text-electric"}`}>
@@ -190,7 +189,7 @@ const CaptivePortal = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-display text-3xl text-foreground">{selected.name} Plan</p>
-                  <p className="text-sm text-muted-foreground mt-1">{selected.duration_label} · {selected.speed_mbps} Mbps · {selected.max_devices} device{selected.max_devices > 1 ? "s" : ""}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{selected.duration_label} · {selected.max_devices} device{selected.max_devices > 1 ? "s" : ""}</p>
                 </div>
                 <div className="text-right">
                   <span className="font-display text-4xl gradient-text-fire">{selected.price_kes.toLocaleString()}</span>

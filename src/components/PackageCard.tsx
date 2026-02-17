@@ -1,4 +1,4 @@
-import { Wifi, Clock, Zap, Star } from "lucide-react";
+import { Wifi, Clock, Star } from "lucide-react";
 
 export interface WifiPackage {
   id: string;
@@ -80,10 +80,6 @@ const PackageCard = ({ pkg, onSelect }: PackageCardProps) => {
 
         {/* Features */}
         <div className="space-y-2 mb-6">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Zap className={`w-3 h-3 ${pkg.color === "fire" ? "text-fire" : "text-electric"}`} />
-            <span>{pkg.speed} download speed</span>
-          </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Wifi className={`w-3 h-3 ${pkg.color === "fire" ? "text-fire" : "text-electric"}`} />
             <span>Up to {pkg.devices} device{pkg.devices > 1 ? "s" : ""}</span>
