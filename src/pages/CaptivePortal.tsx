@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Wifi, Zap, Clock, Users, ChevronRight, Phone, Mail, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import VoucherDisplay from "@/components/VoucherDisplay";
-import heroBg from "@/assets/hero-bg.jpg";
+import sonicBg from "@/assets/sonic-bg.jpeg";
 
 interface Package {
   id: string;
@@ -98,16 +98,14 @@ const CaptivePortal = () => {
   const packageIcons = ["⚡", "🚀", "🌙"];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen flex flex-col relative">
+      {/* Full-page background */}
+      <div className="fixed inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${sonicBg})` }} />
+      <div className="fixed inset-0 bg-background/70 backdrop-blur-sm" />
+
       {/* Hero Header */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${heroBg})` }} />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background" />
-        {/* Animated network grid */}
-        <div className="absolute inset-0 opacity-10" style={{
-          backgroundImage: 'radial-gradient(circle at 1px 1px, hsl(var(--electric)) 1px, transparent 0)',
-          backgroundSize: '40px 40px'
-        }} />
+      <div className="relative overflow-hidden z-10">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/80" />
         <div className="relative z-10 text-center py-12 px-4">
           {/* Logo */}
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-electric/10 border-2 border-electric/40 mb-4 wifi-pulse mx-auto">
@@ -123,7 +121,7 @@ const CaptivePortal = () => {
         </div>
       </div>
 
-      <div className="flex-1 px-4 pb-10 max-w-lg mx-auto w-full">
+      <div className="relative z-10 flex-1 px-4 pb-10 max-w-lg mx-auto w-full">
 
         {step === "packages" && (
           <div className="space-y-3">
@@ -283,7 +281,7 @@ const CaptivePortal = () => {
       </div>
 
       {/* Footer */}
-      <div className="border-t border-border py-4 text-center text-xs text-muted-foreground">
+      <div className="relative z-10 border-t border-border py-4 text-center text-xs text-muted-foreground">
         Kabejja Net Wi-Fi · Powered by <span className="text-electric">Pesapal</span>
         {" · "}
         <a href="/admin" className="hover:text-electric transition-colors">Admin</a>

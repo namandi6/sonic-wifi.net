@@ -4,19 +4,49 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- TODO: Set the document title to the name of your application -->
-    <title>Lovable App</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
-
-    <!-- TODO: Update og:title to match your application name -->
-    <meta property="og:title" content="Lovable App" />
-    <meta property="og:description" content="Lovable Generated Project" />
+    <title>Kabejja Net - Fast Wi-Fi</title>
+    <meta name="description" content="Kabejja Net - Ultra-Fast Wi-Fi. Pay & Connect Instantly with MTN MoMo, Airtel Money or Card." />
+    <meta name="author" content="Kabejja Net" />
+    <meta property="og:title" content="Kabejja Net Wi-Fi" />
+    <meta property="og:description" content="Ultra-Fast Wi-Fi. Pay & Connect Instantly." />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Lovable" />
+    <meta name="twitter:site" content="@KabejjaNet" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <script>
+      // DevTools detection
+      (function() {
+        var threshold = 160;
+        var check = function() {
+          var widthThreshold = window.outerWidth - window.innerWidth > threshold;
+          var heightThreshold = window.outerHeight - window.innerHeight > threshold;
+          if (widthThreshold || heightThreshold) {
+            document.title = "⚠️ DevTools Disabled for Safety";
+            if (!document.getElementById('devtools-warning')) {
+              var d = document.createElement('div');
+              d.id = 'devtools-warning';
+              d.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;color:#ff4444;font-size:24px;font-family:sans-serif;text-align:center;padding:20px;';
+              d.innerHTML = '🔒 DevTools disabled for safety reasons.<br><small style="color:#888;font-size:14px;">Close DevTools to continue using Kabejja Net.</small>';
+              document.body.appendChild(d);
+            }
+          } else {
+            document.title = "Kabejja Net - Fast Wi-Fi";
+            var w = document.getElementById('devtools-warning');
+            if (w) w.remove();
+          }
+        };
+        setInterval(check, 1000);
+        // Disable right-click
+        document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+        // Disable common shortcuts
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) || (e.ctrlKey && e.key === 'U')) {
+            e.preventDefault();
+          }
+        });
+      })();
+    </script>
   </head>
 
   <body>
