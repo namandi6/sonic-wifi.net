@@ -14,13 +14,170 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      admin_users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          amount_kes: number
+          created_at: string
+          id: string
+          package_id: string | null
+          payment_method: string
+          pesapal_order_id: string | null
+          pesapal_tracking_id: string | null
+          phone: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_kes: number
+          created_at?: string
+          id?: string
+          package_id?: string | null
+          payment_method?: string
+          pesapal_order_id?: string | null
+          pesapal_tracking_id?: string | null
+          phone: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_kes?: number
+          created_at?: string
+          id?: string
+          package_id?: string | null
+          payment_method?: string
+          pesapal_order_id?: string | null
+          pesapal_tracking_id?: string | null
+          phone?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "wifi_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vouchers: {
+        Row: {
+          code: string
+          created_at: string
+          device_ip: string | null
+          expires_at: string | null
+          id: string
+          order_id: string | null
+          package_id: string | null
+          status: string
+          used_at: string | null
+          valid_hours: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          device_ip?: string | null
+          expires_at?: string | null
+          id?: string
+          order_id?: string | null
+          package_id?: string | null
+          status?: string
+          used_at?: string | null
+          valid_hours: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          device_ip?: string | null
+          expires_at?: string | null
+          id?: string
+          order_id?: string | null
+          package_id?: string | null
+          status?: string
+          used_at?: string | null
+          valid_hours?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vouchers_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vouchers_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "wifi_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wifi_packages: {
+        Row: {
+          created_at: string
+          duration_hours: number
+          duration_label: string
+          id: string
+          is_active: boolean | null
+          is_popular: boolean | null
+          max_devices: number
+          name: string
+          price_kes: number
+          speed_mbps: number
+        }
+        Insert: {
+          created_at?: string
+          duration_hours: number
+          duration_label: string
+          id?: string
+          is_active?: boolean | null
+          is_popular?: boolean | null
+          max_devices?: number
+          name: string
+          price_kes: number
+          speed_mbps?: number
+        }
+        Update: {
+          created_at?: string
+          duration_hours?: number
+          duration_label?: string
+          id?: string
+          is_active?: boolean | null
+          is_popular?: boolean | null
+          max_devices?: number
+          name?: string
+          price_kes?: number
+          speed_mbps?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_voucher_code: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
