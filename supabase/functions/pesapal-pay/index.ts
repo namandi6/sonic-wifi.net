@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
-    const { orderId, packageName, amount, phone, email, callbackUrl, ipnUrl } = await req.json();
+    const { orderId, packageName, amount, phone, email, callbackUrl, ipnUrl, currency } = await req.json();
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -67,13 +67,13 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         id: orderId,
-        currency: 'KES',
+        currency: currency || 'UGX',
         amount: amount,
-        description: `Sonic Wi-Fi - ${packageName}`,
+        description: `Sonic Net Wi-Fi - ${packageName}`,
         callback_url: callbackUrl,
         redirect_mode: '',
         notification_id: ipnId,
-        branch: 'Sonic Wi-Fi',
+        branch: 'Sonic Net',
         billing_address: {
           phone_number: phone,
           email_address: email || '',
