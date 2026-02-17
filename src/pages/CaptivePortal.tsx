@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Wifi, Zap, Clock, Users, ChevronRight, Phone, Mail } from "lucide-react";
+import { Wifi, Zap, Clock, Users, ChevronRight, Phone, Mail, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import VoucherDisplay from "@/components/VoucherDisplay";
 import heroBg from "@/assets/hero-bg.jpg";
@@ -68,6 +68,7 @@ const CaptivePortal = () => {
           email,
           callbackUrl: `${appUrl}/payment/callback?orderId=${order.id}`,
           ipnUrl: `${baseUrl}/pesapal-ipn`,
+          currency: "UGX",
         }),
       });
 
@@ -76,8 +77,9 @@ const CaptivePortal = () => {
 
       window.location.href = data.redirect_url;
 
-    } catch (err: any) {
-      setError(err.message || "Payment failed. Please try again.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Payment failed. Please try again.";
+      setError(message);
       setLoading(false);
     }
   };
@@ -93,63 +95,85 @@ const CaptivePortal = () => {
     );
   }
 
+  const packageIcons = ["⚡", "🚀", "🌙"];
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
+      {/* Hero Header */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: `url(${heroBg})` }} />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/50 to-background" />
-        <div className="relative z-10 text-center py-10 px-4">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <div className="w-12 h-12 rounded-2xl bg-electric/20 border-2 border-electric/50 flex items-center justify-center wifi-pulse">
-              <Wifi className="w-7 h-7 text-electric" />
-            </div>
-            <h1 className="font-display text-5xl gradient-text-electric">SONIC WI-FI</h1>
+        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${heroBg})` }} />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background" />
+        {/* Animated network grid */}
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: 'radial-gradient(circle at 1px 1px, hsl(var(--electric)) 1px, transparent 0)',
+          backgroundSize: '40px 40px'
+        }} />
+        <div className="relative z-10 text-center py-12 px-4">
+          {/* Logo */}
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-electric/10 border-2 border-electric/40 mb-4 wifi-pulse mx-auto">
+            <Wifi className="w-10 h-10 text-electric" />
           </div>
-          <p className="text-muted-foreground font-heading text-lg">Lightning fast internet · Buy a voucher below</p>
-          <div className="flex items-center justify-center gap-2 mt-3">
-            <span className="bg-secondary/20 border border-secondary/30 text-secondary px-3 py-1 rounded-full text-xs font-bold">M-PESA</span>
-            <span className="bg-destructive/20 border border-destructive/30 text-destructive px-3 py-1 rounded-full text-xs font-bold">AIRTEL</span>
-            <span className="bg-electric/20 border border-electric/30 text-electric px-3 py-1 rounded-full text-xs font-bold">CARD</span>
+          <h1 className="font-display text-6xl gradient-text-electric mb-1">KABEJJA NET</h1>
+          <p className="text-muted-foreground font-heading text-base tracking-wide">Ultra-Fast Wi-Fi · Pay & Connect Instantly</p>
+          <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
+            <span className="bg-secondary/20 border border-secondary/30 text-secondary px-3 py-1 rounded-full text-xs font-bold">MTN MOMO</span>
+            <span className="bg-destructive/20 border border-destructive/30 text-destructive px-3 py-1 rounded-full text-xs font-bold">AIRTEL MONEY</span>
+            <span className="bg-electric/20 border border-electric/30 text-electric px-3 py-1 rounded-full text-xs font-bold">VISA/CARD</span>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 px-4 pb-10 max-w-2xl mx-auto w-full">
+      <div className="flex-1 px-4 pb-10 max-w-lg mx-auto w-full">
 
         {step === "packages" && (
           <div className="space-y-3">
-            <h2 className="font-heading text-xl text-muted-foreground uppercase tracking-wider mb-4">Choose a Package</h2>
-            {packages.map((pkg) => (
+            <p className="font-heading text-sm text-muted-foreground uppercase tracking-widest mb-5 text-center">Select Your Plan</p>
+            {packages.map((pkg, i) => (
               <button
                 key={pkg.id}
                 onClick={() => { setSelected(pkg); setStep("payment"); }}
-                className={`w-full card-sonic rounded-2xl p-4 text-left flex items-center gap-4 transition-all ${pkg.is_popular ? "package-popular" : ""}`}
+                className={`w-full rounded-2xl p-5 text-left flex items-center gap-4 transition-all border group ${
+                  pkg.is_popular
+                    ? "bg-gradient-to-r from-fire/10 to-fire/5 border-fire/50 hover:border-fire hover:shadow-lg"
+                    : "card-sonic hover:border-electric/50"
+                }`}
               >
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${pkg.is_popular ? "bg-fire/20 border border-fire/30" : "bg-electric/20 border border-electric/30"}`}>
-                  <Wifi className={`w-6 h-6 ${pkg.is_popular ? "text-fire" : "text-electric"}`} />
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-2xl ${
+                  pkg.is_popular ? "bg-fire/20 border border-fire/40" : "bg-electric/10 border border-electric/30"
+                }`}>
+                  {packageIcons[i % 3]}
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-heading text-lg text-foreground">{pkg.name}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-display text-2xl text-foreground">{pkg.name}</span>
                     {pkg.is_popular && (
-                      <span className="bg-fire/20 text-fire text-xs font-bold px-2 py-0.5 rounded-full border border-fire/30">POPULAR</span>
+                      <span className="bg-fire text-white text-xs font-bold px-2 py-0.5 rounded-full">BEST VALUE</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{pkg.duration_label}</span>
                     <span className="flex items-center gap-1"><Zap className="w-3 h-3" />{pkg.speed_mbps} Mbps</span>
                     <span className="flex items-center gap-1"><Users className="w-3 h-3" />{pkg.max_devices} device{pkg.max_devices > 1 ? "s" : ""}</span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className={`font-display text-2xl ${pkg.is_popular ? "gradient-text-fire" : "gradient-text-electric"}`}>
-                    KES {pkg.price_kes}
-                  </span>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground ml-auto mt-1" />
+                <div className="text-right flex-shrink-0">
+                  <div className={`font-display text-3xl ${pkg.is_popular ? "gradient-text-fire" : "gradient-text-electric"}`}>
+                    {pkg.price_kes.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-muted-foreground font-semibold">UGX</div>
+                  <ChevronRight className={`w-5 h-5 mt-1 ml-auto transition-transform group-hover:translate-x-1 ${pkg.is_popular ? "text-fire" : "text-electric"}`} />
                 </div>
               </button>
             ))}
+
+            {/* Info strip */}
+            <div className="mt-6 bg-muted/20 rounded-2xl p-4 flex items-start gap-3">
+              <Shield className="w-5 h-5 text-electric flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-semibold text-foreground mb-0.5">Secure & Instant</p>
+                <p className="text-xs text-muted-foreground">Voucher delivered immediately after payment. Works on all devices.</p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -159,51 +183,56 @@ const CaptivePortal = () => {
               onClick={() => setStep("packages")}
               className="text-muted-foreground hover:text-electric transition-colors text-sm font-heading mb-5 flex items-center gap-1"
             >
-              ← Back to packages
+              ← Back
             </button>
 
-            {/* Summary */}
-            <div className="card-sonic rounded-2xl p-4 mb-5 border border-electric/20">
+            {/* Order Summary */}
+            <div className="rounded-2xl p-5 mb-5 bg-gradient-to-br from-card to-muted/30 border border-electric/20">
+              <p className="text-xs text-muted-foreground uppercase tracking-widest mb-3">Order Summary</p>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-heading text-xl text-foreground">{selected.name}</p>
-                  <p className="text-sm text-muted-foreground">{selected.duration_label} · {selected.speed_mbps} Mbps</p>
+                  <p className="font-display text-3xl text-foreground">{selected.name} Plan</p>
+                  <p className="text-sm text-muted-foreground mt-1">{selected.duration_label} · {selected.speed_mbps} Mbps · {selected.max_devices} device{selected.max_devices > 1 ? "s" : ""}</p>
                 </div>
-                <span className="font-display text-3xl gradient-text-fire">KES {selected.price_kes}</span>
+                <div className="text-right">
+                  <span className="font-display text-4xl gradient-text-fire">{selected.price_kes.toLocaleString()}</span>
+                  <p className="text-xs text-muted-foreground font-bold">UGX</p>
+                </div>
               </div>
             </div>
 
-            {/* Method */}
+            {/* Payment Method */}
             <div className="mb-5">
-              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Payment Method</label>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">Payment Method</label>
               <div className="grid grid-cols-3 gap-2">
                 {([
-                  { id: "mpesa" as const, label: "M-PESA" },
-                  { id: "airtel" as const, label: "Airtel Money" },
-                  { id: "card" as const, label: "Card" },
-                ] as { id: "mpesa" | "airtel" | "card"; label: string }[]).map((m) => (
+                  { id: "mpesa" as const, label: "MTN MoMo", emoji: "🟡" },
+                  { id: "airtel" as const, label: "Airtel Money", emoji: "🔴" },
+                  { id: "card" as const, label: "Card", emoji: "💳" },
+                ] as { id: "mpesa" | "airtel" | "card"; label: string; emoji: string }[]).map((m) => (
                   <button
                     key={m.id}
                     onClick={() => setMethod(m.id)}
-                    className={`py-3 rounded-xl text-sm font-heading border transition-all ${
+                    className={`py-3 px-2 rounded-xl text-xs font-heading border transition-all flex flex-col items-center gap-1 ${
                       method === m.id
                         ? "border-electric bg-electric/10 text-electric"
                         : "border-border text-muted-foreground hover:border-electric/40"
                     }`}
                   >
+                    <span className="text-xl">{m.emoji}</span>
                     {m.label}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Phone */}
+            {/* Phone / Email */}
             <div className="mb-4">
-              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">
                 {method === "card" ? "Email Address" : "Phone Number"}
               </label>
               <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-electric">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-electric">
                   {method === "card" ? <Mail className="w-4 h-4" /> : <Phone className="w-4 h-4" />}
                 </div>
                 <input
@@ -211,22 +240,22 @@ const CaptivePortal = () => {
                   placeholder={method === "card" ? "your@email.com" : "0712 345 678"}
                   value={method === "card" ? email : phone}
                   onChange={(e) => method === "card" ? setEmail(e.target.value) : setPhone(e.target.value)}
-                  className="w-full bg-muted/50 border border-border rounded-xl pl-10 pr-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-electric transition-colors"
+                  className="w-full bg-muted/30 border border-border rounded-xl pl-11 pr-4 py-3.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-electric transition-colors text-sm"
                 />
               </div>
             </div>
 
             {method !== "card" && (
-              <div className="mb-4">
-                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Email (Optional)</label>
+              <div className="mb-5">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Email (Optional — for receipt)</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <input
                     type="email"
                     placeholder="receipt@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-muted/50 border border-border rounded-xl pl-10 pr-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-electric transition-colors"
+                    className="w-full bg-muted/30 border border-border rounded-xl pl-11 pr-4 py-3.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-electric transition-colors text-sm"
                   />
                 </div>
               </div>
@@ -234,7 +263,7 @@ const CaptivePortal = () => {
 
             {error && (
               <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-3 mb-4 text-destructive text-sm">
-                {error}
+                ⚠️ {error}
               </div>
             )}
 
@@ -243,11 +272,11 @@ const CaptivePortal = () => {
               disabled={loading || (!phone && !email)}
               className="btn-fire w-full py-4 rounded-2xl font-heading text-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Redirecting to Pesapal..." : `PAY KES ${selected.price_kes} →`}
+              {loading ? "⏳ Redirecting to Pesapal..." : `PAY UGX ${selected.price_kes.toLocaleString()} →`}
             </button>
 
-            <p className="text-center text-xs text-muted-foreground mt-3">
-              🔒 Secured by Pesapal Payment Gateway
+            <p className="text-center text-xs text-muted-foreground mt-3 flex items-center justify-center gap-1">
+              <Shield className="w-3 h-3" /> Secured by Pesapal · Regulated by Bank of Uganda
             </p>
           </div>
         )}
@@ -255,7 +284,7 @@ const CaptivePortal = () => {
 
       {/* Footer */}
       <div className="border-t border-border py-4 text-center text-xs text-muted-foreground">
-        Sonic Wi-Fi · Powered by <span className="text-electric">Pesapal</span>
+        Kabejja Net Wi-Fi · Powered by <span className="text-electric">Pesapal</span>
         {" · "}
         <a href="/admin" className="hover:text-electric transition-colors">Admin</a>
       </div>
