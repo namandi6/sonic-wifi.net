@@ -13,7 +13,7 @@ export default {
       },
     },
     extend: {
-      colors: {
+        colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -47,6 +47,17 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        electric: {
+          DEFAULT: "hsl(var(--electric))",
+          glow: "hsl(var(--electric-glow))",
+        },
+        fire: {
+          DEFAULT: "hsl(var(--fire))",
+          hot: "hsl(var(--fire-hot))",
+        },
+        neon: "hsl(var(--neon-cyan))",
+        "deep-space": "hsl(var(--deep-space))",
+        "space-card": "hsl(var(--space-card))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
