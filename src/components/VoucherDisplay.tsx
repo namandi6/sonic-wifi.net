@@ -64,7 +64,7 @@ const VoucherDisplay = ({ voucher, expiresAt, pkg, onClose }: VoucherDisplayProp
 
           <div className="text-left bg-muted/20 rounded-xl p-4 mb-6 space-y-2">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">How to connect</p>
-            {["Connect to 'SONIC-WIFI' network", "Open any browser", "Enter the voucher code above", "Enjoy lightning-fast internet!"].map((step, i) => (
+            {["Connect to 'Sonic Net' Wi-Fi network", "Open any browser", "Enter your 4-digit voucher code", "Enjoy lightning-fast internet!"].map((step, i) => (
               <div key={i} className="flex items-start gap-3 text-sm">
                 <span className="w-5 h-5 rounded-full bg-electric/20 border border-electric/30 text-electric text-xs flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">{i + 1}</span>
                 <span className="text-muted-foreground">{step}</span>

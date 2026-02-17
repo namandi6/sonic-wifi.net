@@ -124,9 +124,9 @@ const PaymentCallback = () => {
             <div className="text-left bg-muted/20 rounded-xl p-4 mb-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Manual Connection Steps</p>
               {[
-                "Connect to 'KABEJJA-NET' Wi-Fi network",
+                "Connect to 'Sonic Net' Wi-Fi network",
                 "Open any browser — login page should appear",
-                "Enter the voucher code above as username & password",
+                "Enter your 4-digit code as username & password",
                 "Click Login — you're connected!",
               ].map((s, i) => (
                 <div key={i} className="flex items-start gap-2 text-sm mb-1.5">

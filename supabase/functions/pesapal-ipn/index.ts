@@ -20,14 +20,57 @@ async function getPesapalToken(): Promise<string> {
   return data.token;
 }
 
-function generateVoucherCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function generate4DigitCode(): string {
+  const chars = '0123456789';
   let code = '';
-  for (let i = 0; i < 12; i++) {
-    if (i === 4 || i === 8) code += '-';
+  for (let i = 0; i < 4; i++) {
     code += chars[Math.floor(Math.random() * chars.length)];
   }
   return code;
+}
+
+async function provisionMikroTikUser(voucherCode: string, durationHours: number, profile: string): Promise<{ ok: boolean; msg: string }> {
+  const apiUrl = Deno.env.get('MIKROTIK_API_URL');
+  const username = Deno.env.get('MIKROTIK_USERNAME');
+  const password = Deno.env.get('MIKROTIK_PASSWORD');
+
+  if (!apiUrl || !username || !password) {
+    console.log('MikroTik credentials not configured, skipping provisioning');
+    return { ok: false, msg: 'MikroTik not configured' };
+  }
+
+  try {
+    // Calculate limit-uptime in MikroTik format (e.g. "24h", "168h")
+    const limitUptime = `${durationHours}h`;
+
+    const resp = await fetch(`${apiUrl}/rest/ip/hotspot/user/add`, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + btoa(`${username}:${password}`),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: voucherCode,
+        password: voucherCode,
+        profile: profile || 'default',
+        'limit-uptime': limitUptime,
+        server: 'all',
+        comment: `Sonic Net auto-provisioned ${new Date().toISOString()}`,
+      }),
+    });
+
+    if (resp.ok) {
+      console.log(`MikroTik user provisioned: ${voucherCode}`);
+      return { ok: true, msg: 'User provisioned' };
+    } else {
+      const errText = await resp.text();
+      console.error(`MikroTik provisioning failed (${resp.status}):`, errText);
+      return { ok: false, msg: `HTTP ${resp.status}: ${errText}` };
+    }
+  } catch (err) {
+    console.error('MikroTik provisioning error:', err);
+    return { ok: false, msg: err.message };
+  }
 }
 
 Deno.serve(async (req) => {
@@ -90,7 +133,7 @@ Deno.serve(async (req) => {
       })
       .eq('id', orderMerchantRef);
 
-    // If completed, generate voucher
+    // If completed, generate voucher and provision on MikroTik
     if (isCompleted) {
       // Check if voucher already exists
       const { data: existingVoucher } = await supabase
@@ -100,20 +143,26 @@ Deno.serve(async (req) => {
         .single();
 
       if (!existingVoucher) {
-        const code = generateVoucherCode();
+        const code = generate4DigitCode();
+        const durationHours = order.wifi_packages?.duration_hours || 24;
         const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + (order.wifi_packages?.duration_hours || 24));
+        expiresAt.setHours(expiresAt.getHours() + durationHours);
 
         await supabase.from('vouchers').insert({
           order_id: order.id,
           package_id: order.package_id,
           code,
           status: 'active',
-          valid_hours: order.wifi_packages?.duration_hours || 24,
+          valid_hours: durationHours,
           expires_at: expiresAt.toISOString(),
         });
 
         console.log('Voucher created:', code);
+
+        // Auto-provision on MikroTik router
+        const profile = order.wifi_packages?.name?.toLowerCase().replace(/\s+/g, '_') || 'default';
+        const result = await provisionMikroTikUser(code, durationHours, profile);
+        console.log('MikroTik provisioning result:', result);
       }
     }
 

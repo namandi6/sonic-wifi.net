@@ -12,11 +12,9 @@ type PaymentMethod = "mpesa" | "airtel" | "pesapal_card";
 type Step = "details" | "processing" | "success";
 
 const generateVoucher = () => {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
-  for (let i = 0; i < 12; i++) {
-    if (i > 0 && i % 4 === 0) code += "-";
-    code += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < 4; i++) {
+    code += Math.floor(Math.random() * 10).toString();
   }
   return code;
 };
