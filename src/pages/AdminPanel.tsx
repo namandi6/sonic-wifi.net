@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Wifi, Users, TrendingUp, Clock, CheckCircle,
   AlertCircle, Settings, RefreshCw, LogOut, Eye, EyeOff,
-  Printer, Plus, Package, ChevronDown, ChevronUp, Download, BookOpen
+  Printer, Plus, Package, ChevronDown, ChevronUp, Download, BookOpen,
+  Server, Save, TestTube
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -43,7 +44,7 @@ const AdminPanel = () => {
   const [pass, setPass] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [passErr, setPassErr] = useState("");
-  const [tab, setTab] = useState<"overview" | "orders" | "vouchers" | "bulk" | "guide">("overview");
+  const [tab, setTab] = useState<"overview" | "orders" | "vouchers" | "bulk" | "guide" | "settings">("overview");
   const [orders, setOrders] = useState<Order[]>([]);
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [packages, setPackages] = useState<WifiPackage[]>([]);
@@ -187,6 +188,7 @@ const AdminPanel = () => {
     { id: "vouchers", label: "Vouchers" },
     { id: "bulk", label: "Bulk Generate" },
     { id: "guide", label: "MikroTik Guide" },
+    { id: "settings", label: "⚙️ Settings" },
   ] as const;
 
   return (
@@ -417,12 +419,159 @@ const AdminPanel = () => {
 
         {/* MikroTik Guide */}
         {tab === "guide" && <MikroTikGuide />}
+
+        {/* Settings */}
+        {tab === "settings" && <MikroTikSettings />}
       </div>
     </div>
   );
 };
 
 // ─── MikroTik Configuration Guide ───────────────────────────────────────────
+
+// ─── MikroTik Settings ──────────────────────────────────────────────────────
+
+const SETTINGS_KEY = "kabejja_mikrotik_settings";
+
+interface MikroTikConfig {
+  apiUrl: string;
+  username: string;
+  password: string;
+  routerIp: string;
+  defaultProfile: string;
+}
+
+const defaultConfig: MikroTikConfig = {
+  apiUrl: "",
+  username: "admin",
+  password: "",
+  routerIp: "192.168.88.1",
+  defaultProfile: "default",
+};
+
+const MikroTikSettings = () => {
+  const [config, setConfig] = useState<MikroTikConfig>(() => {
+    try {
+      const saved = localStorage.getItem(SETTINGS_KEY);
+      return saved ? { ...defaultConfig, ...JSON.parse(saved) } : defaultConfig;
+    } catch { return defaultConfig; }
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  const update = (key: keyof MikroTikConfig, value: string) => {
+    setConfig(prev => ({ ...prev, [key]: value }));
+    setSaved(false);
+    setTestResult(null);
+  };
+
+  const saveConfig = () => {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(config));
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  };
+
+  const testConnection = async () => {
+    if (!config.apiUrl) {
+      setTestResult({ ok: false, msg: "Please enter the API URL first" });
+      return;
+    }
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const resp = await fetch(`${config.apiUrl}/rest/system/identity`, {
+        headers: {
+          "Authorization": "Basic " + btoa(`${config.username}:${config.password}`),
+        },
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        setTestResult({ ok: true, msg: `✅ Connected! Router: ${data.name || "MikroTik"}` });
+      } else {
+        setTestResult({ ok: false, msg: `❌ HTTP ${resp.status} — Check credentials` });
+      }
+    } catch (err: any) {
+      setTestResult({ ok: false, msg: `❌ Connection failed — ${err.message || "Check URL & CORS"}` });
+    }
+    setTesting(false);
+  };
+
+  const fields: { key: keyof MikroTikConfig; label: string; placeholder: string; help: string; isPassword?: boolean }[] = [
+    { key: "apiUrl", label: "MikroTik API URL", placeholder: "https://203.0.113.50:443", help: "Public IP/domain with port. Must be reachable from the internet. Use HTTPS for security." },
+    { key: "username", label: "API Username", placeholder: "admin", help: "RouterOS admin username. Create a dedicated API user for production." },
+    { key: "password", label: "API Password", placeholder: "••••••••", help: "RouterOS password for the API user.", isPassword: true },
+    { key: "routerIp", label: "Router LAN IP", placeholder: "192.168.88.1", help: "Local IP used for auto-connect redirect (hotspot login page)." },
+    { key: "defaultProfile", label: "Default Hotspot Profile", placeholder: "default", help: "The MikroTik hotspot user profile to assign if no specific match." },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="card-sonic rounded-xl p-5">
+        <div className="flex items-center gap-3 mb-2">
+          <Server className="w-6 h-6 text-electric" />
+          <h3 className="font-heading text-xl text-foreground">MikroTik Router Settings</h3>
+        </div>
+        <p className="text-sm text-muted-foreground mb-6">
+          Configure your MikroTik REST API connection for automated hotspot user provisioning. RouterOS 7+ is required.
+        </p>
+
+        <div className="space-y-5">
+          {fields.map(f => (
+            <div key={f.key}>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">{f.label}</label>
+              <div className="relative">
+                <input
+                  type={f.isPassword && !showPassword ? "password" : "text"}
+                  value={config[f.key]}
+                  onChange={e => update(f.key, e.target.value)}
+                  placeholder={f.placeholder}
+                  className="w-full bg-muted/30 border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-electric transition-colors pr-10"
+                />
+                {f.isPassword && (
+                  <button onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-electric transition-colors">
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">{f.help}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-3 mt-6">
+          <button onClick={saveConfig} className="btn-electric px-6 py-3 rounded-xl font-heading flex items-center gap-2">
+            <Save className="w-4 h-4" />
+            {saved ? "✓ Saved!" : "Save Settings"}
+          </button>
+          <button onClick={testConnection} disabled={testing} className="btn-fire px-6 py-3 rounded-xl font-heading flex items-center gap-2 disabled:opacity-50">
+            <TestTube className="w-4 h-4" />
+            {testing ? "Testing..." : "Test Connection"}
+          </button>
+        </div>
+
+        {testResult && (
+          <div className={`mt-4 rounded-xl p-4 border text-sm ${testResult.ok ? "bg-electric/10 border-electric/30 text-electric" : "bg-destructive/10 border-destructive/30 text-destructive"}`}>
+            {testResult.msg}
+          </div>
+        )}
+      </div>
+
+      <div className="bg-fire/10 border border-fire/30 rounded-xl p-4">
+        <p className="text-sm font-semibold text-fire mb-1">⚠️ Security Notes</p>
+        <ul className="text-xs text-muted-foreground space-y-1">
+          <li>• Settings are stored locally in your browser only</li>
+          <li>• For production, store credentials as backend secrets instead</li>
+          <li>• Use HTTPS on your router's REST API</li>
+          <li>• Create a dedicated API user with limited permissions on your router</li>
+          <li>• Enable the REST API: /ip/service enable www-ssl</li>
+        </ul>
+      </div>
+    </div>
+  );
+};
+
 
 const steps = [
   {
