@@ -15,34 +15,24 @@
     <meta name="twitter:site" content="@KabejjaNet" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
     <script>
-      // DevTools detection
       (function() {
-        var threshold = 160;
-        var check = function() {
-          var widthThreshold = window.outerWidth - window.innerWidth > threshold;
-          var heightThreshold = window.outerHeight - window.innerHeight > threshold;
-          if (widthThreshold || heightThreshold) {
-            document.title = "⚠️ DevTools Disabled for Safety";
-            if (!document.getElementById('devtools-warning')) {
-              var d = document.createElement('div');
-              d.id = 'devtools-warning';
-              d.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;color:#ff4444;font-size:24px;font-family:sans-serif;text-align:center;padding:20px;';
-              d.innerHTML = '🔒 DevTools disabled for safety reasons.<br><small style="color:#888;font-size:14px;">Close DevTools to continue using Kabejja Net.</small>';
-              document.body.appendChild(d);
-            }
-          } else {
-            document.title = "Kabejja Net - Fast Wi-Fi";
-            var w = document.getElementById('devtools-warning');
-            if (w) w.remove();
-          }
-        };
-        setInterval(check, 1000);
         // Disable right-click
         document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-        // Disable common shortcuts
+        // Block DevTools shortcuts and show warning
         document.addEventListener('keydown', function(e) {
-          if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) || (e.ctrlKey && e.key === 'U')) {
+          if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) || (e.ctrlKey && (e.key === 'U' || e.key === 'u'))) {
             e.preventDefault();
+            e.stopPropagation();
+            var w = document.getElementById('devtools-warning');
+            if (!w) {
+              w = document.createElement('div');
+              w.id = 'devtools-warning';
+              w.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;color:#ff4444;font-size:24px;font-family:sans-serif;text-align:center;padding:20px;cursor:pointer;';
+              w.innerHTML = '🔒 DevTools disabled for safety reasons.<br><small style="color:#888;font-size:14px;">Click anywhere to dismiss.</small>';
+              w.onclick = function() { w.remove(); };
+              document.body.appendChild(w);
+              setTimeout(function() { if (w.parentNode) w.remove(); }, 4000);
+            }
           }
         });
       })();
