@@ -74,7 +74,7 @@ const PaymentModal = ({ pkg, onClose, onSuccess }: PaymentModalProps) => {
                     </div>
                     <div>
                       <p className="font-heading text-foreground">{pkg.name}</p>
-                      <p className="text-xs text-muted-foreground">{pkg.duration} · {pkg.speed}</p>
+                      <p className="text-xs text-muted-foreground">{pkg.duration} · {pkg.devices} device{pkg.devices > 1 ? "s" : ""}</p>
                     </div>
                   </div>
                   <span className="font-display text-2xl gradient-text-fire">
