@@ -135,7 +135,7 @@ const Index = () => {
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             {[
-              { icon: Zap, label: "Up to 50 Mbps", sub: "Blazing fast speeds" },
+              { icon: Zap, label: "Blazing Fast", sub: "Ultra-fast internet" },
               { icon: Shield, label: "Secure & Encrypted", sub: "Protected browsing" },
               { icon: Wifi, label: "Instant Connect", sub: "No setup required" },
               { icon: BarChart3, label: "Pay via Pesapal", sub: "M-PESA · Airtel · Card" },
