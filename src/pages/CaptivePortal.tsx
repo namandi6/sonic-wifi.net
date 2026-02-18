@@ -75,7 +75,7 @@ const CaptivePortal = () => {
       const data = await resp.json();
       if (data.error) throw new Error(data.error);
 
-      window.location.href = data.redirect_url;
+      window.location.replace(data.redirect_url);
 
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Payment failed. Please try again.";
@@ -111,8 +111,8 @@ const CaptivePortal = () => {
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-electric/10 border-2 border-electric/40 mb-4 wifi-pulse mx-auto">
             <Wifi className="w-10 h-10 text-electric" />
           </div>
-          <h1 className="font-display text-6xl gradient-text-electric mb-1">SONIC NET</h1>
-          <p className="text-muted-foreground font-heading text-base tracking-wide">Ultra-Fast Wi-Fi · Pay & Connect Instantly</p>
+          <h1 className="font-display text-6xl gradient-text-electric mb-1">SONIC WIFI.NET</h1>
+          <p className="text-muted-foreground font-heading text-base tracking-wide">Ultra-Fast Wi-Fi · Pay &amp; Connect Instantly</p>
           <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
             <span className="bg-secondary/20 border border-secondary/30 text-secondary px-3 py-1 rounded-full text-xs font-bold">MTN MOMO</span>
             <span className="bg-destructive/20 border border-destructive/30 text-destructive px-3 py-1 rounded-full text-xs font-bold">AIRTEL MONEY</span>
@@ -279,9 +279,20 @@ const CaptivePortal = () => {
         )}
       </div>
 
+      {/* Kabejja Systems Ad */}
+      <div className="relative z-10 bg-gradient-to-r from-fire/10 via-card/80 to-electric/10 border-t border-border px-4 py-3 text-center">
+        <p className="text-xs text-muted-foreground">
+          🚀 Hotspot System by{" "}
+          <a href="https://www.kabejjasystems.store" target="_blank" rel="noopener noreferrer" className="text-fire font-bold hover:underline">
+            Kabejja Systems
+          </a>
+          {" · "}kabejjasystems.store
+        </p>
+      </div>
+
       {/* Footer */}
       <div className="relative z-10 border-t border-border py-4 text-center text-xs text-muted-foreground">
-        Sonic Net Wi-Fi · Powered by <span className="text-electric">Pesapal</span>
+        Sonic Wifi.Net · Powered by <span className="text-electric">Pesapal</span>
         {" · "}
         <a href="/admin" className="hover:text-electric transition-colors">Admin</a>
       </div>

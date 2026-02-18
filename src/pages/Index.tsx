@@ -33,7 +33,7 @@ const Index = () => {
               <Wifi className="w-5 h-5 text-electric" />
             </div>
             <span className="font-display text-2xl gradient-text-electric tracking-wider">
-              SONIC WI-FI
+              SONIC WIFI.NET
             </span>
           </div>
 
@@ -81,7 +81,7 @@ const Index = () => {
           <h1 className="font-display text-7xl md:text-9xl mb-4 leading-none">
             <span className="gradient-text-electric">SONIC</span>
             <br />
-            <span className="gradient-text-fire">WI-FI</span>
+            <span className="gradient-text-fire">WIFI.NET</span>
           </h1>
 
           <p className="text-xl text-muted-foreground mb-4 font-heading max-w-xl mx-auto">
@@ -223,18 +223,38 @@ const Index = () => {
         </div>
       </section>
 
+      {/* ===== KABEJJA SYSTEMS AD ===== */}
+      <section className="py-6 px-4 bg-gradient-to-r from-fire/10 via-card to-electric/10 border-y border-border">
+        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-center sm:text-left">
+            <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">🚀 Powered &amp; Built by</p>
+            <p className="font-display text-2xl gradient-text-fire">Kabejja Systems</p>
+            <p className="text-sm text-muted-foreground mt-1">Professional Hotspot &amp; IT Solutions for your Business</p>
+          </div>
+          <a
+            href="https://www.kabejjasystems.store"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-fire px-6 py-3 rounded-xl font-heading text-sm whitespace-nowrap flex-shrink-0"
+          >
+            Visit Us → kabejjasystems.store
+          </a>
+        </div>
+      </section>
+
       {/* ===== FOOTER ===== */}
       <footer className="border-t border-border py-10 px-4">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Wifi className="w-5 h-5 text-electric" />
-            <span className="font-display text-xl gradient-text-electric">SONIC WI-FI</span>
+            <span className="font-display text-xl gradient-text-electric">SONIC WIFI.NET</span>
           </div>
           <p className="text-muted-foreground text-sm">
-            Powered by <span className="text-electric font-semibold">Pesapal</span> Payment Gateway
+            Powered by <span className="text-electric font-semibold">Pesapal</span> · Built by{" "}
+            <a href="https://www.kabejjasystems.store" target="_blank" rel="noopener noreferrer" className="text-fire font-semibold hover:underline">Kabejja Systems</a>
           </p>
           <p className="text-muted-foreground text-xs">
-            © {new Date().getFullYear()} Sonic Wi-Fi. All rights reserved.
+            © {new Date().getFullYear()} Sonic Wifi.Net. All rights reserved.
           </p>
         </div>
       </footer>
